@@ -62,8 +62,8 @@ function playYT(connection, message) {
     var server = servers[message.guild.id];
     var link = server.playlist[0].substring(3);
 
-    server.dispatcher = connection.playStream(YTDL(link, { filter: 'audioonly' }), { seek: 0, volume: 1 });
-    //server.dispatcher.setVolume(0.2);
+    server.dispatcher = connection.playStream(YTDL(link, { audioonly: true }), { passes: 5 });
+    server.dispatcher.setVolume(0.04);
     client.user.setGame(link);
     message.channel.send('Now playing: ' + link);
 
@@ -88,17 +88,17 @@ client.on('ready', () => {
 });
 
 client.on('message', message => {
-
-    var msg = message.content.toLowerCase();
-    var args = msg.substring(1).split(' ');
-    var cmd = msg.substring(0, 1);
+    
+    const args = message.content.slice(config.chat.length).trim().split(/ +/g);
+    const command = args.shift().toLowerCase();
+    const cmd = message.content.substring(0, 1);
 
     switch (cmd) {
         case (config.chat):
 
-            switch (args[0]) {
+            switch (command) {
                 case ('args'):
-                    message.channel.send(args);
+                    message.channel.send(args[0]);
                     break;
                 case ('ping'):
                     message.channel.send('pong');
@@ -109,7 +109,7 @@ client.on('message', message => {
 
         case (config.audio):
 
-            voiceCommands(message, args);
+            voiceCommands(message, command, args);
             
             break;
 
@@ -182,7 +182,7 @@ function getSongArtist() {
     }
 }
 
-function voiceCommands(message, args) {
+function voiceCommands(message, command, args) {
 
     if (!servers[message.guild.id]) {
         servers[message.guild.id] = {
@@ -190,7 +190,7 @@ function voiceCommands(message, args) {
         };
     }
 
-    switch (message, args[0]) {
+    switch (command) {
         case ('play'):
             if (!message.member.voiceChannel) {
                 message.reply('Please join a voice channel first.');
@@ -229,16 +229,16 @@ function voiceCommands(message, args) {
             message.channel.send('Now playing: ' + server.playlist[0]);
             break;
         case ('add'):
-            if (searchStringInArray(args[1], songlist) !== -1) {
+            if (searchStringInArray(args[0], songlist) !== -1) {
                 var server = servers[message.guild.id];
-                server.playlist.push(args[1]);
+                server.playlist.push(args[0]);
                 message.channel.send('I\'ve added your song to the playlist');
             }
             break;
         case ('addyt'):
-            if (args[1]) {
+            if (args[0]) {
                 var server = servers[message.guild.id];
-                server.playlist.push('yt:' + args[1]);
+                server.playlist.push('yt:' + args[0]);
                 message.channel.send('I\'ve added your link to the playlist');
             }
             break;
