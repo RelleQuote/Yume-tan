@@ -2,5 +2,8 @@
 node_modules/
 jspm_packages/
 
+# Resource directories
+resources/
+
 # config files
 config.json
