@@ -50,7 +50,7 @@ client.on('message', message => {
 
         case (config.audio):
 
-            voice.voiceCommands(message, command, args);
+            voice.voiceCommands(client, message, command, args);
             
             break;
 

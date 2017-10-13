@@ -3,7 +3,8 @@ const Discord = require('discord.js');
 const music = require('discord.js-music');
 const YTDL = require('ytdl-core');
 const getInfo = require('ytdl-getinfo');
-const Youtube = require("youtube-api");
+const google = require('googleapis');
+const youtube = google.youtube('v3');
 
 // Import properties from the config file
 const config = require("./config.json");
@@ -16,8 +17,8 @@ const token = config.token;
 const CREDENTIALS = config.ytapikey;
 
 module.exports = {
-    voiceCommands: function (message, command, args) {
-        voiceCommands(message, command, args);
+    voiceCommands: function (client, message, command, args) {
+        voiceCommands(client, message, command, args);
     }
 }
 
@@ -28,13 +29,13 @@ var currentSong = 0;
 
 var servers = {};
 
-function play(connection, message) {
+function play(client, connection, message) {
     var server = servers[message.guild.id];
     if (server.playlist[0]) {
         if (server.playlist[0].startsWith('yt:')) {
-            playYT(connection, message);
+            playYT(client, connection, message);
         } else {//if (searchStringInArray(server.playlist[0], songlist) !== -1) {
-            playF(connection, message);
+            playF(client, connection, message);
         }
     } else {
         message.channel.send('There are no songs in the playlist!');
@@ -42,9 +43,8 @@ function play(connection, message) {
     }
 }
 
-function playF(connection, message) {
+function playF(client, connection, message) {
     var server = servers[message.guild.id];
-
     server.dispatcher = connection.playFile(SONGFLDR + server.playlist[0]);
     server.dispatcher.setVolume(0.2);
     client.user.setGame(server.playlist[0]);
@@ -61,7 +61,7 @@ function playF(connection, message) {
     });
 }
 
-function playYT(connection, message) {
+function playYT(client, connection, message) {
     var server = servers[message.guild.id];
     var link = server.playlist[0].substring(3);
 
@@ -144,7 +144,34 @@ function getSongArtist() {
     }
 }
 
-function voiceCommands(message, command, args) {
+function addYTPage(pid, token, message) {
+
+    var server = servers[message.guild.id];
+    const results = youtube.playlistItems.list({
+        key: config.ytapikey,
+        part: 'snippet',
+        playlistId: pid,
+        maxResults: 50,
+        fields: 'items/snippet/resourceId/videoId,nextPageToken',
+        pageToken: token
+    }, (err, results) => {
+        if (results.items) {
+            for (i = 0; i < results.items.length; i++) {
+                console.log(results.items[i].snippet.resourceId.videoId);
+                server.playlist.push('yt:https://www.youtube.com/watch?v=' + results.items[i].snippet.resourceId.videoId);
+            }
+            message.channel.send(results.items.length + ' items have been added to the playlist!');
+            /*if (results.nextPageToken !== null) {
+                console.log(results.nextPageToken);
+                addYTPage(pid, results.nextPageToken, message);
+            }*/
+        } else {
+            message.channel.send('No items have been added to the playlist!');
+        }
+    });
+}
+
+function voiceCommands(client, message, command, args) {
 
     if (!servers[message.guild.id]) {
         servers[message.guild.id] = {
@@ -163,7 +190,7 @@ function voiceCommands(message, command, args) {
 
             if (!message.guild.voiceConnection) {
                 message.member.voiceChannel.join().then(function (connection) {
-                    play(connection, message);
+                    play(client, connection, message);
                 });
             }
 
@@ -202,6 +229,11 @@ function voiceCommands(message, command, args) {
                 var server = servers[message.guild.id];
                 server.playlist.push('yt:' + args[0]);
                 message.channel.send('I\'ve added your link to the playlist');
+            }
+            break;
+        case ('addytpl'):
+            if (args[0]) {
+                addYTPage(args[0], null, message);
             }
             break;
         case ('end'):
