@@ -5,12 +5,10 @@ const YTDL = require('ytdl-core');
 const getInfo = require('ytdl-getinfo');
 const google = require('googleapis');
 const youtube = google.youtube('v3');
+const fs = require('fs');
 
 // Import properties from the config file
 const config = require("./config.json");
-
-// Import file system module
-const fs = require('fs');
 
 // The token of your bot
 const token = config.token;
@@ -53,7 +51,7 @@ function playF(client, connection, message) {
     server.dispatcher.on('end', function () {
         server.playlist.shift();
         if (server.playlist[0] && connection) {
-            play(connection, message);
+            play(client, connection, message);
         } else {
             connection.disconnect();
             client.user.setGame('with itself');
@@ -73,7 +71,7 @@ function playYT(client, connection, message) {
     server.dispatcher.on('end', function () {
         server.playlist.shift();
         if (server.playlist[0]) {
-            play(connection, message);
+            play(client, connection, message);
         } else {
             connection.disconnect();
             client.user.setGame('with itself');
@@ -241,6 +239,12 @@ function voiceCommands(client, message, command, args) {
             if (message.guild.voiceConnection) {
                 server.playlist.length = 0;
                 message.guild.voiceConnection.disconnect();
+            }
+            break;
+        case ('volume'):
+            var server = servers[message.guild.id];
+            if (!isNaN(args[0]) && server.dispatcher) {
+                server.dispatcher.setVolume(args[0]);
             }
             break;
         case ('addall'):

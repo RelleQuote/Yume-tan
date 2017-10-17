@@ -7,6 +7,7 @@ const Youtube = require("youtube-api");
 const fs = require('fs');
 
 const voice = require('./yume-voice.js');
+const game = require('./yume-games.js');
 
 // Import properties from the config file
 const config = require("./config.json");
@@ -55,6 +56,9 @@ client.on('message', message => {
             break;
 
         case (config.game):
+
+            game.gameCommands(client, message, command, args);
+
             break;
     }
 
