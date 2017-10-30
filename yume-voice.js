@@ -6,6 +6,7 @@ const getInfo = require('ytdl-getinfo');
 const google = require('googleapis');
 const youtube = google.youtube('v3');
 const fs = require('fs');
+const promise = require('promise');
 
 // Import properties from the config file
 const config = require("./config.json");
@@ -32,7 +33,7 @@ function play(client, connection, message) {
     if (server.playlist[0]) {
         if (server.playlist[0].startsWith('yt:')) {
             playYT(client, connection, message);
-        } else {//if (searchStringInArray(server.playlist[0], songlist) !== -1) {
+        } else {
             playF(client, connection, message);
         }
     } else {
@@ -43,44 +44,110 @@ function play(client, connection, message) {
 
 function playF(client, connection, message) {
     var server = servers[message.guild.id];
-    server.dispatcher = connection.playFile(SONGFLDR + server.playlist[0]);
-    server.dispatcher.setVolume(0.2);
-    client.user.setGame(server.playlist[0]);
-    message.channel.send('Now playing: ' + server.playlist[0]);
+    var songname = server.playlist[0];
 
-    server.dispatcher.on('end', function () {
-        server.playlist.shift();
-        if (server.playlist[0] && connection) {
-            play(client, connection, message);
-        } else {
-            connection.disconnect();
-            client.user.setGame('with itself');
+    var pf = new Promise(
+        function (resolve, reject) {
+            if (server.playlist[0]) {
+                server.dispatcher = connection.playFile(SONGFLDR + server.playlist[0]);
+                resolve(server.dispatcher);
+            } else {
+                reject("Unable to play song.");
+            }
         }
-    });
+    );
+
+    var playFile = function () {
+        pf
+            .then(function (fulfilled) {
+                fulfilled.setVolume(0.2);
+                client.user.setGame(songname);
+                message.channel.send('Now playing: ' + songname);
+
+                server.dispatcher.on('end', function () {
+                    server.playlist.shift();
+                    if (server.playlist[0]) {
+                        play(client, connection, message);
+                    } else {
+                        connection.disconnect();
+                        client.user.setGame('with itself');
+                    }
+                });
+            })
+            .catch(function (error) {
+                console.log(error);
+                server.playlist.shift();
+                if (server.playlist[0] && connection) {
+                    play(client, connection, message);
+                } else {
+                    connection.disconnect();
+                    client.user.setGame('with itself');
+                }
+            });
+
+    }
+
+    playFile();
 }
 
 function playYT(client, connection, message) {
     var server = servers[message.guild.id];
     var link = server.playlist[0].substring(3);
 
-    server.dispatcher = connection.playStream(YTDL(link, { audioonly: true }), { passes: 5 });
-    server.dispatcher.setVolume(0.04);
-    client.user.setGame(link);
-    message.channel.send('Now playing: ' + link);
-
-    server.dispatcher.on('end', function () {
-        server.playlist.shift();
-        if (server.playlist[0]) {
-            play(client, connection, message);
-        } else {
-            connection.disconnect();
-            client.user.setGame('with itself');
+    var pyt = new Promise(
+        function (resolve, reject) {
+            if (server.playlist[0]) {
+                server.dispatcher = connection.playStream(YTDL(link, { audioonly: true }), { passes: 5 });
+                resolve(server.dispatcher);
+            } else {
+                reject("Unable to play song.");
+            }
         }
-    });
+    );
+
+    var playYoutube = function () {
+        pyt
+            .then(function (fulfilled) {
+                fulfilled.setVolume(0.04);
+                client.user.setGame(link);
+                message.channel.send('Now playing: ' + link);
+
+                server.dispatcher.on('end', function () {
+                    server.playlist.shift();
+                    if (server.playlist[0]) {
+                        play(client, connection, message);
+                    } else {
+                        connection.disconnect();
+                        client.user.setGame('with itself');
+                    }
+                });
+            })
+            .catch(function (error) {
+                console.log(error);
+                server.playlist.shift();
+                if (server.playlist[0] && connection) {
+                    play(client, connection, message);
+                } else {
+                    connection.disconnect();
+                    client.user.setGame('with itself');
+                }
+            });
+
+    }
+
+    playYoutube();
 }
 
 function shuffle(playlist) {
-    for (var i = 1; i < playlist.length - 1; i++) {
+    var server = servers[message.guild.id];
+    var start;
+    if (server.dispatcher) {
+        start = 1;
+    } else {
+        start = 0;
+    }
+
+    for (var i = start; i < playlist.length - 1; i++) {
         var temp = playlist[i];
         var rnd = Math.floor(Math.random() * (playlist.length - 2) + 1);
         playlist[i] = playlist[rnd];
@@ -143,30 +210,43 @@ function getSongArtist() {
 }
 
 function addYTPage(pid, token, message) {
-
     var server = servers[message.guild.id];
-    const results = youtube.playlistItems.list({
-        key: config.ytapikey,
-        part: 'snippet',
-        playlistId: pid,
-        maxResults: 50,
-        fields: 'items/snippet/resourceId/videoId,nextPageToken',
-        pageToken: token
-    }, (err, results) => {
-        if (results.items) {
-            for (i = 0; i < results.items.length; i++) {
-                console.log(results.items[i].snippet.resourceId.videoId);
-                server.playlist.push('yt:https://www.youtube.com/watch?v=' + results.items[i].snippet.resourceId.videoId);
-            }
-            message.channel.send(results.items.length + ' items have been added to the playlist!');
-            /*if (results.nextPageToken !== null) {
-                console.log(results.nextPageToken);
-                addYTPage(pid, results.nextPageToken, message);
-            }*/
-        } else {
-            message.channel.send('No items have been added to the playlist!');
+    var addpl = new Promise(
+        function (resolve, reject) {
+            const results = youtube.playlistItems.list({
+                key: config.ytapikey,
+                part: 'snippet',
+                playlistId: pid,
+                maxResults: 50,
+                fields: 'items/snippet/resourceId/videoId,nextPageToken',
+                pageToken: token
+            }, (err, results) => {
+                if (results) {
+                    resolve(results);
+                } else {
+                    reject('No items have been added to the playlist!');
+                }
+            });
         }
-    });
+    );
+
+    var addPlayList = function () {
+        addpl
+            .then(function (fulfilled) {
+                for (i = 0; i < fulfilled.items.length; i++) {
+                    console.log(fulfilled.items[i].snippet.resourceId.videoId);
+                    server.playlist.push('yt:https://www.youtube.com/watch?v=' + fulfilled.items[i].snippet.resourceId.videoId);
+                }
+                message.channel.send(fulfilled.items.length + ' items have been added to the playlist!');
+            })
+            .catch(function (error) {
+                console.log(error);
+                message.channel.send("Unable to add to playlist!");
+            });
+
+    }
+
+    addPlayList();
 }
 
 function voiceCommands(client, message, command, args) {

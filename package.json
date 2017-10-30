@@ -1,0 +1,38 @@
+{
+  "name": "yume-tan",
+  "version": "1.0.0",
+  "description": "A discord bot for random funzies.",
+  "main": "yume.js",
+  "dependencies": {
+    "bug-killer": "4.4.4",
+    "discord.js": "11.2.1",
+    "discord.js-music": "1.0.3",
+    "ffmpeg-binaries": "3.2.2-3",
+    "fs": "0.0.1-security",
+    "lien": "3.1.0",
+    "node-opus": "0.2.7",
+    "node-schedule": "1.2.5",
+    "opn": "5.1.0",
+    "opusscript": "0.0.4",
+    "pretty-bytes": "4.0.2",
+    "promise": "8.0.1",
+    "r-json": "1.2.8",
+    "youtube-api": "2.0.9",
+    "ytdl-core": "0.18.0",
+    "ytdl-getinfo": "1.0.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node yume.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoldenRelle/Yume-tan.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GoldenRelle/Yume-tan/issues"
+  },
+  "homepage": "https://github.com/GoldenRelle/Yume-tan#readme"
+}

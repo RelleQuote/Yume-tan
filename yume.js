@@ -1,3 +1,6 @@
+// Display running env
+console.log("Running in :" + process.env.NODE_ENV);
+
 // Import modules
 const Discord = require('discord.js');
 const music = require('discord.js-music');
