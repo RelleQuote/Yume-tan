@@ -11,6 +11,7 @@ const fs = require('fs');
 
 const voice = require('./yume-voice.js');
 const game = require('./yume-games.js');
+const conversion = require('./yume-conversions.js');
 
 // Import properties from the config file
 const config = require("./config.json");
@@ -61,6 +62,12 @@ client.on('message', message => {
         case (config.game):
 
             game.gameCommands(client, message, command, args);
+
+            break;
+
+        case (config.conversion):
+
+            conversion.conversionCommands(client, message, command, args);
 
             break;
     }

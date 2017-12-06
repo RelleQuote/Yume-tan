@@ -25,9 +25,11 @@ function gameCommands(client, message, command, args) {
     if (!servers[message.guild.id]) {
         servers[message.guild.id] = {
             gameRoom: {
-                game: null,
-                players: [],
-                playerLimit: null
+                players: [] = {
+                    hand: []
+                },
+                playerLimit: 8,
+                game: 'none'
             }
         };
     }
@@ -50,8 +52,6 @@ function gameCommands(client, message, command, args) {
 
         case ('blackjack'):
             blackjack(message, server);
-            break;
-        case ('startblackjack'):
             jackblack.playBlackJack(client, message, command, server);
             break;
     }
@@ -114,7 +114,8 @@ function blackjack(message, server) {
 
     let userData = checkNewPlayer(message);
 
-    if (server.gameRoom.players.indexOf(message.author.id) != -1) {
+    if (server.gameRoom.players.includes(message.author.id)) {
+        server.gameRoom.players.splice(server.gameRoom.players.indexOf(message.author.id), 1);
         message.reply('Thank you for joining in blackjack, ' + message.author.username + '.\nYou will be cashed out after this game.');
     } else if (userData.shards >= 20) {
         server.gameRoom.players.push(message.author.id);

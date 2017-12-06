@@ -138,7 +138,7 @@ function playYT(client, connection, message) {
     playYoutube();
 }
 
-function shuffle(playlist) {
+function shuffle(message, playlist) {
     var server = servers[message.guild.id];
     var start;
     if (server.dispatcher) {
@@ -280,7 +280,7 @@ function voiceCommands(client, message, command, args) {
             break;
         case ('shuffle'):
             var server = servers[message.guild.id];
-            shuffle(server.playlist);
+            shuffle(message, server.playlist);
             message.channel.send('I\'ve shuffled the playlist for you.');
             break;
         case ('playlist'):
