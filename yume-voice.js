@@ -60,7 +60,7 @@ function playF(client, connection, message) {
     var playFile = function () {
         pf
             .then(function (fulfilled) {
-                fulfilled.setVolume(0.2);
+                fulfilled.setVolume(server.Volume);
                 client.user.setGame(songname);
                 message.channel.send('Now playing: ' + songname);
 
@@ -108,7 +108,7 @@ function playYT(client, connection, message) {
     var playYoutube = function () {
         pyt
             .then(function (fulfilled) {
-                fulfilled.setVolume(0.04);
+                fulfilled.setVolume(server.volume);
                 client.user.setGame(link);
                 message.channel.send('Now playing: ' + link);
 
@@ -253,7 +253,8 @@ function voiceCommands(client, message, command, args) {
 
     if (!servers[message.guild.id]) {
         servers[message.guild.id] = {
-            playlist: []
+            playlist: [],
+            volume: 0.2
         };
     }
 
@@ -324,7 +325,8 @@ function voiceCommands(client, message, command, args) {
         case ('volume'):
             var server = servers[message.guild.id];
             if (!isNaN(args[0]) && server.dispatcher) {
-                server.dispatcher.setVolume(args[0]);
+                server.volume = args[0];
+                server.dispatcher.setVolume(server.volume);
             }
             break;
         case ('addall'):
